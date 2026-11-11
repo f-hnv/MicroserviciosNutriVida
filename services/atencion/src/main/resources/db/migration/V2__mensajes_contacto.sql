@@ -1,0 +1,7 @@
+CREATE TABLE mensaje_contacto (
+ id_mensaje CHAR(36) NOT NULL PRIMARY KEY,
+ nombre VARCHAR(100) NOT NULL,
+ correo VARCHAR(254) NOT NULL,
+ comentario VARCHAR(500) NOT NULL,
+ fecha_creacion DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6)
+) ENGINE=InnoDB;
