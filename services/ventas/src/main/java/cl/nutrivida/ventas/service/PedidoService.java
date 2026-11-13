@@ -58,8 +58,16 @@ public class PedidoService {
         return jwt != null && "ADMIN".equals(jwt.getClaimAsString("rol"));
     }
 
+    // El vendedor solo consulta: ve todas las órdenes, pero no puede crear compras.
+    private boolean vendedor(Jwt jwt) {
+        return jwt != null && "VENDEDOR".equals(jwt.getClaimAsString("rol"));
+    }
+
     @Transactional
     public PedidoResponseDTO crear(PedidoRequestDTO data, String key, String guestKey, Jwt jwt) {
+        if (vendedor(jwt))
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN, "El rol vendedor solo puede consultar órdenes");
         if (key == null || !key.matches("[A-Za-z0-9_-]{16,64}"))
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST, "Falta una clave de idempotencia válida");
@@ -132,7 +140,10 @@ public class PedidoService {
 
     public List<PedidoResponseDTO> listar(Jwt jwt) {
         return pedidoRepository.findAll().stream()
-                .filter(p -> admin(jwt) || Objects.equals(p.getIdUsuario(), jwt.getSubject()))
+                .filter(p ->
+                        admin(jwt)
+                                || vendedor(jwt)
+                                || Objects.equals(p.getIdUsuario(), jwt.getSubject()))
                 .sorted(Comparator.comparing(Pedido::getFechaCreacion).reversed())
                 .map(this::vista)
                 .toList();
@@ -143,7 +154,7 @@ public class PedidoService {
                 pedidoRepository
                         .findById(id)
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        autorizar(p, guestKey, jwt);
+        if (!vendedor(jwt)) autorizar(p, guestKey, jwt);
         return vista(p);
     }
 
