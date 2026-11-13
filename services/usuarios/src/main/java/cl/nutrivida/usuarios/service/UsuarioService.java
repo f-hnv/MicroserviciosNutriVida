@@ -51,8 +51,9 @@ public class UsuarioService {
 
     public UsuarioResumenResponseDTO resumen(String id, Jwt jwt) {
         Usuario usuario = obtener(id);
+        String rol = jwt.getClaimAsString("rol");
         if (!id.equals(jwt.getSubject())
-                && "PACIENTE".equals(jwt.getClaimAsString("rol"))
+                && ("PACIENTE".equals(rol) || "VENDEDOR".equals(rol))
                 && !"MEDICO".equals(usuario.getRol())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
